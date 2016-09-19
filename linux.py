@@ -13,11 +13,10 @@ d['Debian'] = 'apt-get'
 check_linux = pexpect.spawn('lsb_release -a')
 check_linux.expect(pexpect.EOF)
 pcg_mng = d.get(check_linux.before.split("\n")[1].split()[2])
-#print d.get(child.before.split("\n")[1].split()[2])
 call(["sudo", pcg_mng, "install","-y","libccid", "pcscd", "libpam-p11", "libp11-2", "libengine-pkcs11-openssl", "opensc"])
-#call(["wget", "--no-check-certificate", "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"]) # 200 ok?
-#call(["sudo", "cp", "librtpkcs11ecp.so", "/usr/lib"])
-#call(["sudo", "chmod", "644", "/usr/lib/librtpkcs11ecp.so"])
+call(["wget", "--no-check-certificate", "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"]) # 200 ok?
+call(["sudo", "cp", "librtpkcs11ecp.so", "/usr/lib"])
+call(["sudo", "chmod", "644", "/usr/lib/librtpkcs11ecp.so"])
 check_token = call(["pkcs11-tool", "--module", "/usr/lib/librtpkcs11ecp.so", "-T"])
 if check_token != 0:
 	print "check the token is inserted correctly\n"
@@ -46,5 +45,5 @@ else:
 call("openssl x509 -in cert.crt -out cert.pem -inform DER -outform PEM", shell=True)
 call("mkdir  -p ~/.eid && chmod 0755 ~/.eid && cat cert.pem >> ~/.eid/authorized_certificates && chmod 0644 ~/.eid/authorized_certificates", shell=True)
 call("sudo echo 'Name: Pam_p11\nDefault: yes\nPriority: 800\nAuth-Type: Primary\nAuth: sufficient pam_p11_opensc.so /usr/lib/librtpkcs11ecp.so\n' > /usr/share/pam-configs/p11", shell=True)
-call("sudo pam-auth-update", shell=True)
+call("sudo pam-auth-update", shell=True) #todo: diff
 call("sudo login")
