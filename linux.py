@@ -2,6 +2,7 @@
 from platform import dist
 from subprocess import call
 import pexpect
+print "Welcome msg here"
 token_pin = input('Enter PIN: ')
 
 d = {}
