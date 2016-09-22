@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from platform import dist
-from subprocess import call
+from sys import exit
+from subprocess import call, Popen, PIPE
+
 import pexpect
 token_pin = input('Enter PIN: ')
 
@@ -12,20 +14,23 @@ d['Ubuntu'] = 'apt-get'
 d['Debian'] = 'apt-get'
 
 package_manager = d.get(dist()[0])
-call(["sudo", package_manager, "install","-y","libccid", "pcscd", "libpam-p11", "libp11-2", "libengine-pkcs11-openssl", "opensc"])
-call(["wget", "--no-check-certificate", "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"]) # 200 ok?
+install_packages = call(["sudo", package_manager, "install","-y","libccid", "pcscd", "libpam-p11", "libp11-2", "libengine-pkcs11-openssl", "opensc"])
+if install_packages != 0:
+	exit("check your internet connection\n")
+download_library = call(["wget", "--no-check-certificate", "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"]) # 200 ok?
+if download_library != 0:
+	exit("check your internet connection\n")
 call(["sudo", "cp", "librtpkcs11ecp.so", "/usr/lib"])
 call(["sudo", "chmod", "644", "/usr/lib/librtpkcs11ecp.so"])
 check_token = call(["pkcs11-tool", "--module", "/usr/lib/librtpkcs11ecp.so", "-T"])
 if check_token != 0:
-	print "check the token is inserted correctly\n"
+	exit("check the token is inserted correctly\n")
 
-check_cert = pexpect.spawn('pkcs11-tool --module /usr/lib/librtpkcs11ecp.so -O')
-check_cert.expect(pexpect.EOF)
-check_cert.before
-if len(check_cert.before.split("\n")) > 1:
-	cert_id = str(check_cert.before.split("\n")[3].split()[1])
-	call(["pkcs11-tool", "--module",  "/usr/lib/librtpkcs11ecp.so", "-r", "-y", "cert", "--id",  cert_id, ">", "cert.crt"])
+proc = Popen(["pkcs11-tool", "--module", "/usr/lib/librtpkcs11ecp.so", "-O"], stdout = PIPE).communicate()
+if len(str(proc).split("\\n")) > 1:
+	cert_id =  str(proc).split("\\n")[2].split()[1]
+	cmd_cert = "pkcs11-tool --module /usr/lib/librtpkcs11ecp.so -r -y cert --id {" + cert_id + "} > cert.crt"
+	call(cmd_cert, shell=True)
 
 else:
 	call("pkcs11-tool --module /usr/lib/librtpkcs11ecp.so --keypairgen --key-type rsa:2048 -l --id 45", shell=True)
