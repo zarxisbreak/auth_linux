@@ -2,7 +2,7 @@
 from platform import dist
 from sys import exit
 from subprocess import call, Popen, PIPE
-
+from struct import calcsize
 import pexpect
 print "Welcome msg here"
 token_pin = input('Enter PIN: ')
@@ -18,7 +18,14 @@ package_manager = d.get(dist()[0])
 install_packages = call(["sudo", package_manager, "install","-y","libccid", "pcscd", "libpam-p11", "libp11-2", "libengine-pkcs11-openssl", "opensc"])
 if install_packages != 0:
 	exit("check your internet connection\n")
-download_library = call(["wget", "--no-check-certificate", "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"]) # 200 ok?
+architecture = 8 * calcsize("P")
+if architecture == 32:
+	download_library_for_current_arcitecture = "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x86/rtpkcs11ecp/librtpkcs11ecp.so"
+elif architecture == 64:
+	download_library_for_current_architecture = "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/rtpkcs11ecp/librtpkcs11ecp.so"
+else:
+	download_library_for_current_architecture = "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x86/rtpkcs11ecp/librtpkcs11ecp.so"
+download_library = call(["wget", "--no-check-certificate", download_library_for_current_architecture])
 if download_library != 0:
 	exit("check your internet connection\n")
 call(["sudo", "cp", "librtpkcs11ecp.so", "/usr/lib"])
