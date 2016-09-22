@@ -4,6 +4,7 @@ from sys import exit
 from subprocess import call, Popen, PIPE
 
 import pexpect
+print "Welcome msg here"
 token_pin = input('Enter PIN: ')
 
 d = {}
